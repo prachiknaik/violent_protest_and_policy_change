@@ -1,2 +1,6 @@
 # violent_protest_and_policy_change
-This is an attempt to replicate Ryan Enos's paper: "Can Violent Protest Change Local Policy Support? Evidence from the Aftermath of the 1992 Los Angeles Riot."
+This is an attempt to replicate Ryan Enos's paper: "Can Violent Protest Change Local Policy Support? Evidence from the Aftermath of the 1992 Los Angeles Riot." 
+
+The abstract for the paper reads as follows: "Violent protests are dramatic political events, yet we know little about the effect of these events on political behavior. While scholars typically treat violent protests as deliberate acts undertaken in pursuit of specific goals, due to a lack of appropriate data and difficulty in causal identification, there is scant evidence of whether riots can actually increase support for these goals. Using geocoded data, we analyze measures of policy support before and after the 1992 Los Angeles riot -- one of the most high-profile events of political violence in recent American history -- which occurred just prior to an election. Contrary to some expectations from the academic literature and the popular press, we find that the riot caused a marked liberal shift in policy support at the polls. Investigating the sources of this shift, we find that it was likely the result of increased mobilization of both African American and white voters. Remarkably, this mobilization endures over a decade later."
+
+The datasets and supporting materials were gathered from dataverse.harvard.edu and http://ryandenos.com/papers
