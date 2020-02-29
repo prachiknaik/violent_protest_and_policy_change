@@ -3,25 +3,31 @@ title: "Milestone_4"
 author: "Prachi Naik"
 date: "2/28/2020"
 output: bookdown::pdf_document2
-bibliography: bibliograph.bib
+bibliography: bibliography.bib
 link_citations: true
-
 ---
-#Introduction
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::write_bib(c("knitr", "stringr"), "bib.bib", width = 60)
+knitr::write_bib(c("knitr", "stringr"), "bibliography.bib", width = 60)
+options(tinytex.verbose = TRUE)
 
+library(tinytex)
 library(gt)
+library(latexpdf)
+library(gtable)
 library(bookdown)
 library(stargazer)
+library(gtsummary)
+library(rstanarm)
+library(knitcitations)
 library(tidyverse)
 ```
 
+This is my pdf document. Please refer to the Github repository of my final project for further information.^[[Github repository](https://github.com/prachiknaik/violent_protest_and_policy_change)]]
 
-Show us that you know how to use all the relevant tools by producing a short PDF which contains the following components: a bibliography (and associated references), a footnote, a table (using the gt package), a regression table (using whatever packages you like – options include gtsummary, stargazer, kable/kableExtra, and report). All of this can be brief (i.e., just two entries in the References is fine) and fake (made up data in the tables). We just want to see that you can get things to work. Submit the PDF to Canvas. Include the url for your Github repo in a footnote.
 
-# A Table of Fake Data
+## A Table of Fake Data
 ```{r fake_data, echo=FALSE}
 
 gender <- rbinom(20, 1, .5)
@@ -59,14 +65,32 @@ model_2 <- lm(political_participation ~ gender + age, data = data )
 ```
 
 
-# Regression Table
-
+## Regression Table
 ```{r, regression table, results= "asis", echo=FALSE}
 
-stargazer(model_1, model_2, header = FALSE,
-          dep.var.labels=c("political_participation"),
-          covariate.labels=c("gender", "age"))
-
+tbl_regression(
+  model_2,
+  label = NULL,
+  exponentiate = FALSE,
+  include = everything(),
+  show_single_row = NULL,
+  conf.level = NULL,
+  intercept = FALSE,
+  estimate_fun = NULL,
+  pvalue_fun = NULL,
+  tidy_fun = NULL,
+  show_yesno = NULL,
+  exclude = NULL
+)
+               
 ```
 
-# References
+## References
+```{r generated bibliography, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
+cleanbib()
+options("citation_format"= "pandoc")
+read.bibtex(file="bibliography.bib")
+
+#it's not nicely formatted, i don't know how to change that. tried to follow Maria Burzillo's lead but I don't know why I am getting the hastags. I don't understand how she did the references even though I looked at her repo!
+```
