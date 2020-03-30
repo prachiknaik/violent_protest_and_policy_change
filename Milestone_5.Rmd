@@ -1,0 +1,154 @@
+---
+title: "Milestone 5"
+author: "Prachi Naik"
+date: "3/29/2020"
+output: bookdown::pdf_document2
+bibliography: m5bib.bib
+link_citations: true
+citation_package: natbib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#knitr::write_bib("m5bib.bib", width = 60)
+options(tinytex.verbose = TRUE)
+
+library(tinytex)
+library(gt)
+library(latexpdf)
+library(gtable)
+library(bookdown)
+library(stargazer)
+library(gtsummary)
+library(kableExtra)
+library(rstanarm)
+library(knitr)
+library(knitcitations)
+library(tidyverse)
+```
+
+# Overview of "Can Violent Protest Change Local Policy Support? Evidence from the Aftermath of the 1992 Los Angeles Riot" by Ryan D. Enos
+
+This paper seeks to answer a longstanding question in political science: though violent protests are undoubtedly eye-catching and dramatic, do they actually have an effect on political behavior? Focusing on the 1992 LA "Race Riots" (also commonly called the "Rodney King Riots"), one of the most high profile events of political violence in recent years, Enos and his colleagues found that the riot caused a significant liberal shift in policy support at the polls for issues said to have motivated the riots themselves. Throughout the paper, the researchers use geocoded data analysis to ivestigate the source of this shift and trace it back to the mobilization of African American and Liberal White voters following the LA Riots. The "policy shifts" referenced here are actually local shifts in referendum voting on public goods targeted at urban dwelling racial minorities after the 1992 riots. These policies were put on the ballot before the riots erupted. Though the riot itself was a nonrandom event, the release of the video of police officers brutalizing an unarmed Black man (Rodney King) that ultimately triggered the riot was considered by the researchers to be unrelated to the election timeline. The researchers conducted a difference-in-difference analysis of pre and post riot policy voting to control for secular trends in policy support. They further explored the validity of this causal claim by examining the spatial correlation between how much support for a certain policy changed based on how far from the epicenter of those voters were. Ultimately, they found that the closer voters were to the epicenter of the riots, the more likely they were to vote for policies that provided liberal relief to minority urban communities. ^[All replication analysis available at: https://github.com/prachiknaik/violent_protest_and_policy_change]
+
+The datasets and supporting materials were gathered from dataverse.harvard.edu and http://ryandenos.com/papers
+
+# Graphic
+```{r, graphic, echo=FALSE, warning=FALSE, out.width= '100%'}
+
+load(file = "data/Voterfile1992.RData")
+load(file = "data/race_imputation.RData") 
+
+# Here I am reading in the precinct results for the measures of concern in the 1990 election prior to the riot. prop 121 refers to the pre-riot attitude towards higher education and prop 123 refers to the pre-riot attitude towards public schools. I added variables to connote attitude and calculated the total percent of yes votes over yes + no votes for each precinct on each proposition. This summarizes atttitude towards those issues
+pre_votes <- read_csv("data/election_data_121_123.csv",
+  col_types = cols(
+                X1 = col_double(),
+                precinct = col_character(),
+                ballots_cast_90 = col_double(),
+                y121 = col_double(),
+                n121 = col_double(),
+                y123 = col_double(),
+                n123 = col_double(),
+                page_90 = col_double()
+                )) %>% 
+  mutate(highed_90 = y121/(y121+n121),
+            pubschool_90 = y123/(y123 + n123))
+
+# Here I am reading in the precinct results for the measures of concern in the 1992 election after the riot. prop 153 refers to the post-riot attitude towards higher education and prop 152 refers to the post-riot attitude towards public schools. I added variables to connote attitude and calculated the total percent of yes votes over yes + no votes for each precinct on each proposition. This summarizes atttitude towards those issues
+post_votes <- read_csv("data/election_data_152_153.csv",
+                       col_types = cols(
+                                      X1 = col_double(),
+                                      precinct = col_character(),
+                                      ballots_cast_92 = col_double(),
+                                      y152 = col_double(),
+                                      n152 = col_double(),
+                                      y153 = col_double(),
+                                      n153 = col_double(),
+                                      page_92 = col_double()
+                                      )) %>% 
+  mutate(highed_92 = y153/(y153+n153),
+            pubschool_92 = y152/(y152 + n152))
+
+#then I merged the pre and the post vote by precinct in order to calculate a crude difference-in-difference estimate by subtracting pubschool90 from pubschool92 and highed90 from highed92 and then finding the difference
+
+diff = merge(pre_votes, post_votes, by="precinct") %>% 
+  mutate(pubschool_diff = pubschool_92 - pubschool_90,
+         highed_diff = highed_92 - highed_90,
+         ed_diff = pubschool_diff - highed_diff)
+
+#Then I'm going to create a histogram of the ed_diff by precinct. I skipped over so many important steps in cleaning and prepping the data, so I'm not surprised that the result is not what was realized in the paper. The actual results in the paper show that the diff-in-diff estimate for all voters by precinct is 0.05, my red mean life shows a line much less than that, though it IS greater than no impact. 
+
+graph <- diff %>% 
+  select(ed_diff, precinct) %>% 
+  ggplot(aes(x=ed_diff)) +
+  geom_histogram(bins = 100) +
+  xlim(c(-0.1, 0.2)) +
+  labs(title = "Difference in Differences for All Voters: Some Evidence that the Riot  Influenced Political Opinions",
+       subtitle = "The change in support for public schools across precincts between 1990 and 1992,  net the change in support for universities",
+       x = "Difference in Attitudes Towards Public Schools",
+       y = "Number of Precincts",
+       caption = "Data Source: Ryan Enos from Harvard Dataverse") + 
+  geom_vline(xintercept=mean(diff$ed_diff), color="red") +
+  geom_vline(xintercept = 0, col="blue", linetype= "dashed")
+
+graph
+
+```
+
+
+# Appendix
+
+## My Reproduced Table
+```{r, table replication, echo=FALSE}
+out <- vf %>%
+  dplyr::select(imputed_race_name, age, treat, DISTANCE) %>%
+  dplyr::group_by(treat) %>%
+  dplyr::summarise("African-American" = mean(imputed_race_name=="black", na.rm=T),
+                   White = mean(imputed_race_name=="white", na.rm=T),
+                   "Age (years)" = mean(age),
+                   "Distance from Florence/ Normandie" = mean(DISTANCE),
+                   "N" = n()) %>% 
+  select(-treat) %>% 
+  t() %>% 
+  format(scientific = F, digits =2 )
+
+columnnames <- c( "Before Riot", "After Riot")
+
+table2_p <- kable(out,
+      col.names = columnnames,
+      caption = "TABLE 2: Demographics of Registrants
+Immediately Before and After the Riot. The
+'Before Riot' Column Includes New Registrants
+on the Five Weekdays Before the Riot (4/22–24
+and 4/27–28) and the 'After Riot' Column
+Includes the Five Weekdays After the Riots (5/
+4–8). All Variables are Proportions, Except for
+Age (years) and Distance (meters). Race
+Proportions are Calculated by Drawing From
+Registrants’ Imputed Posterior Race
+Probabilities") %>% 
+  kable_styling()
+
+table2_p
+
+```
+
+## Original Table
+
+```{r, original Table 2, echo = FALSE, out.width='80%'}
+
+include_graphics("Table_2.png")
+
+```
+
+# References
+```{r generated bibliography, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
+cleanbib()
+options("citation_format"= "pandoc")
+read.bibtex(file = "m5bib.bib")
+
+#it's not nicely formatted, i don't know how to change that. tried to follow Maria Burzillo's lead but I don't know why I am getting the hastags. I don't understand how she did the references even though I looked at her repo!
+```
+
