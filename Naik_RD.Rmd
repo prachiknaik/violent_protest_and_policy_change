@@ -1,0 +1,901 @@
+---
+title: "Can Violent Protest Change Local Policy Support?: A Replication Attempt"
+author: "Prachi Naik"
+date: "4/24/2020"
+output: bookdown::pdf_document2
+bibliography: actualbib.bib
+link_citations: true
+citation_package: natbib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+#knitr::write_bib("m5bib.bib", width = 60)
+options(tinytex.verbose = TRUE)
+
+library(gt)
+library(latexpdf)
+library(gtable)
+library(bookdown)
+library(stargazer)
+library(gtsummary)
+library(kableExtra)
+library(rstanarm)
+library(knitr)
+library(knitcitations)
+library(tidyverse)
+
+
+##required libraries from OG code
+library(apsrtable)
+library(car)
+library(dplyr)
+library(ebal)
+library(ei)
+library(foreign)
+library(gdata)
+library(geosphere)
+library(Hmisc)
+library(Matching)
+library(mosaic)
+library(optmatch)
+library(reshape2)
+library(RItools)
+library(stargazer)
+library(tidyverse)
+library(weights)
+library(xtable)
+library(grDevices)
+
+```
+
+# Abstract
+
+Enos, Kaufman, and Sands (2019) show that the 1992 Los Angeles Riot— one of the most well-known and documented instances of political violence in recent American history— caused a significant liberal shift in policy support at the polls due to the increased mobilization of Black and White voters, a mobilization that has endured over a decade later. The replication attempted in this project successfully found that White voters demonstrated a 0.028 increase in support for public school funding relative to university funding (CI: [0.018, 0.039]) and Black voters demonstrated a 0.073 increase (CI: [0.066, 0.081]). Using a weighted t-test, this project sought to examine the effects the Riot had on Asian American voters. The findings were inconsistent with what the authors found for White and Black voters. This matters because heterogenous treatment effects are worth further scrutiny and complication, especially given climates of racial polarization. 
+
+# Introduction
+
+This paper seeks to answer the following fundamental question: what, if any, impact can a violent protest have on changing political behavior? In order to explore this question, Enos, Kaufman, and Sands used a difference-in-differences approach to analyze measures of policy support before and after the 1992 Los Angeles Riot. The Riot was sparked by a series of events that began with the release of a video in which four White police officers were captured violently beating an unarmed black man named Rodney King on March 3, 1991. A little more than a year later, the four officers were subsequently acquitted by an all-White jury. Within hours of the verdict being announced, "a series of violent and destructive incidents occurred around the intersections of Florence Avenue and Normandie Avenue in South Central LA, a predominantly African American neighborhood," which would serve as the Riot's epicenter [@article]. Though the Riot was a nonrandom event, the authors see the release of the video as exogenously timed in relation to the 1992 election. They were able to manipulate a certain symmetry in the 1990 vs 1992 ballot measures to stand for treatment and control measures. For the treatment, they chose to measure support for policy measures concerning k-12 education; for the control, they chose to focus on policy measures concerning University education. The assumptions undergirding this decision will be discussed later on, but most salient here, is that the authors adopt the basic idea that the riot brought the racialized unequal allocation of public goods (k-12 education) to the forefront of voters' minds and thus impacted the way citizens voted on increasing k-12 educational spending. 
+
+Analysis was conducted on the individual voter level instead of on the aggregate level in order to differentiate between racial and geographical effects. Using geocoded individual and precinct-level data, the authors were able to measure the effects of the riot on voters at any proximity to its epicenter. The effect of the Riot itself was estimated by "differencing out" the change in support for University funding (which was assumed to remain constant) from the difference in support for k-12 education funding. Support was measured via a population-weighted mean of "yes" votes for each of the 4 ballot initiatives under consideration. The authors refer to the treatment effect as "EdDiff" [@article]. 
+
+$$EdDiff_{i} = (PubSchool_{i1992} - PubSchool_{i1990}) - (HigherEd_{i1992} - HigherEd_{i1990}).$$
+
+To further isolate the effect of the riot, the authors also cross-verified the correlation between EdDiff and proximity from the epicenter in order to check for omitted variable bias. The findings that the effect is more pronounced closer to the epicenter supports the authors' finding that the riot itself (as opposed to merely the beating and trial) was the mechanism behind the main difference-in-differences effect. Using Ecological Inference (EI) methods developed by Gary King, the authors used a combination of precinct-level digitized vote returns from the LA County registrar and UC Census Bureau demographic data to estimate individual voting behavior by racial group [@KingEI]. They input the demographic proportions of each precinct (what proportion of the precinct is White, African-American, Asian, etc) and the proportion of "yes" votes in each precinct for each of the four ballot iniatives. The difference-in-difference estimator helps answer the following counterfactual: "Among voters in the LA basin, how would support for public schools have changed in the absence of the video, trial, and subsequent riot?" [@article]. While it is difficult, if not impossible to disentangle the three events, the authors attempt to isolate the impact of the riot by posing the secondary counterfactual: "How would support for public schools have changed in the LA basin in the absence of the riot, conditional on the beating and trial happening?" [@article]. This question is answered by the heterogenous treatment effects by distance from the riot's epicenter-- EdDiff is larger closer to the epicenter. 
+
+My replication is focused on the main finding of the paper, Figure 1, which displays three histograms indicating the distribution of EdDiff for all voters, White voters, and Black voters for 1,676 precincts in the Los Angeles Basin. Each histogram shows a positive mean value for EdDiff, indicating an increase in support for public schools net of changes in support for universities. The authors conduct a t-test to construct confidence intervals around this weighted mean. In order to replicate these results, I combed through the replication code and data files the authors made available on the Harvard Dataverse [@data]. Ryan Enos had these files linked on his personal webpage (ryandenos.com). The files needed to replicate Figure 1 were:
+
+(1) The 1992 Voter File; 
+(2) The file containing the results of the race imputation of voters, which was done outside of R using Census data and ArcGIS-based geolocation-coding into precincts. It is worth noting that I had to work with whatever assumptions went into the imputation itself, as no other race-based data was available;
+(3) The votes for Propositions 121 and 123 in 1990
+(4) The votes for Propostions 152 and 153 in 1992
+
+I used R to conduct this analysis [@R]. 
+
+The final paragraph is different between the introduction and the conclusion. In the introduction, it may not even exist! (We don’t want to be overly didactic here. There are many ways to write a great paper.) Or it may just provide a roadmap to the rest of the paper. In the conclusion, the last paragraph is where you get to speculate: What does it all mean? What should we research next?
+
+# Paper Review
+
+This paper seeks to answer a longstanding question in political science: though violent protests are undoubtedly eye-catching and dramatic, do they actually have an effect on political behavior? Focusing on the 1992 LA "Race Riots" (also commonly called the "Rodney King Riots"), one of the most high profile events of political violence in recent years, Enos and his colleagues found that the riot caused a significant liberal shift in policy support at the polls for issues said to have motivated the riots themselves. For the purposes of their inquiry, the authors defined these issues generally as the racialized (mis)allocation of public goods, within which support for education emerged as the ballot referenda of interest. To estimate the effect of the riot, the authors measured the difference in support for ballot initiatives focused on k-12 education (thought to be closely associated with African Americans) against the difference in support for ballot initiatives focused on university funding (less associated with African Americans) in the June 1990 election and the June 1992 election. By "effect of the riot," authors are referring to a "bundled treatment" encapsulating the effect of a riot through various channels such as media coverage, interpersonal experiences of trauma or psychological effects, public statements by politicians, and changing propoerty values, to name a few [@article]. Support for other university-level education policies were not considered "public goods" 
+
+Throughout the paper, the researchers use geocoded data analysis to investigate the source of this shift and trace it back to the mobilization of African American and Liberal White voters following the LA Riots. The "policy shifts" referenced here are actually local shifts in referendum voting on public goods targeted at urban dwelling racial minorities after the 1992 riots. These policies were put on the ballot before the riots erupted. Though the riot itself was a nonrandom event, the release of the video of police officers brutalizing an unarmed Black man (Rodney King) that ultimately triggered the riot was considered by the researchers to be unrelated to the election timeline. The researchers conducted a difference-in-difference analysis of pre and post riot policy voting to control for secular trends in policy support. They further explored the validity of this causal claim by examining the spatial correlation between how much support for a certain policy changed based on how far from the epicenter of those voters were. Ultimately, they found that the closer voters were to the epicenter of the riots, the more likely they were to vote for policies that provided liberal relief to minority urban communities.
+
+The authors rely on a single theoretical assumption to guide their study, which requires closer scrutiny. They believe that increased support for public school funding over university funding is evidence of a liberal shift in political behavior. They arrive at this assumption after a series of complicated logical leaps. First they stipulate that rioting is a political act demanding redress for political grievances. Next, they draw on scholarly interpretations of the 1992 LA riots as "collective action against poor economic and social conditions, triggered by police brutality." To bolster this point, they offer the statistic that "67.5% of African Americans in LA County viewed the riots as a protest against unfair conditions" [@LAriotbook]. This is potentially problematic for two reasons-- first, it assumes a monolithic view of the African-American community, which runs counter to the work the authors do later in the ecological inference weighting process to de-bias the supposed liberalism of Black voters in LA; and second, it offers no such evidence to suggest that White voters viewed the riot in this same light, yet White voters are a key subset of the population studied. Finally, continuing with the authors' logic, they suggest that support for spending on public goods is "associated with African-Americans and racial minorities generally and is often implicated in the social welfare demands of riot participants" [@article]. On the other hand, the authors offer that "attitudes about university spending are, at most, weakly linked to attitudes about African Americans and that funding higher education would not as widely be seen as a method of addressing problems made apparent by the riot" [@article]. This is some of the paper's most vague reasoning unsupported by empirical evidence, and yet, the entire crux of the finding that violent protest does, indeed, mobilize voters to liberally shift their political views rests on this essential juxtaposition of the needs of African Americans with public school funding and not university funding. 
+
+
+## Race Imputations
+
+The authors' racial imputation procedure has 3 steps: 
+
+(1)  They matched the census surname race probability file to the voter file; 89% of individuals have an exact match.  For the remaining 11% , they performed a fuzzy match to identify the closest surname; this reduces error from typos in the voter file and multiple forms of the same surname. After this step, 38 individuals remain with no surname match within our threshold of string distance;
+(2)  They geolocated each registered voter’s address, located that address within a census block, then merged that census block ID to a file of race by census block. Due to geolocating errors, roughly 130,000 individuals were placed in census blocks with zero population;
+(3)  The final step involves a Bayesian update in which they took the census information as a prior and then updated it using the surname probabilities, producing a posterior of racial probabilities.
+
+They then imputed the race of the voter using the highest probability. This begs the following question: why not maintain the uncertainty of race instead of assigning it to the greatest possible probability? This seems like an unnecessary corrupting of data for the sake of causal inference. 
+
+## Ecological Inference Model
+
+The authors use an ecological inference (EI) model to distill precinct-level voting data down to a racialized individual level. imputation algorithm hidden in appendix b.
+
+There are three core asummptions undergirding an EI model:  
+
+(1) parameter variation is characterized by a truncated bivariate normal distribution; 
+(2) that the parameters are uncorrelated with the regressors; and 
+(3) there is no spatial autocorrelation.
+
+The first assumption is satisfied, given that there IS spatial autocorrelation (this is what it means: The term ‘spatial autocorrelation’ is highly suggestive of its meaning: ‘auto’ as in ‘self’; ‘correlation’ as in the statistical use of that term to measure a ‘relationship’ – hence a measure of the relationship between the value of a variable at a location and the same variable but at another location separated by some specified distance (or, in the case of type (3) variables, some measure of ‘lag’ separation between areas). Positive spatial autocorrelation is the tendency for sites or areas separated by a specified distance or ‘lag’ to have similar values of the variable (i.e., both values are high or both are low).[@spatialautocorr]) According to the authors, even when the third assumption is violated, they say the model performs "exceedingly well." Though they refer to other literature (Cho, 1998) to validate this point, this is still cause for concern. A violation of any key assumption seems to be a problem, even though the authors concern themselves more with maintenance of the second assumption-- that the parameters are uncorrelated with regressors. The authors interpret that as meaning "no aggregation bias." Aggregation bias leads to the “ecological fallacy” — the conclusion that what is true for the group must be true for the sub-group or individual. The authors interpret this as referring to the fact that voters of a particular race living in neighborhoods where they are the majority would support public schools at the same or similar rate to voters of that same race in a more heterogenous neighborhood [@article]. They believe this is a relatively safe assumption for African American voters (borne out by the fact that African Americans in the LA Basin registered as Democrats 95% of the time), but less so for White voters. Previous research (Enos, 2017) suggests that Whites in heterogenous precincts are more liberal than Whites in homogenously White neighborhoods, due to the residential sorting or the effects of segregation on voting [@EnosSegregation]. In order to address this, the authors apply a weighting system suggested by King (1997 b) in which they apply a weight to each precinct that is inversely proportional to the size of the ecological inference standard error. They present both weighted and unweighted difference-in-differences results, which are remarkably similar in magnitude: " The weighted average value of the difference-in-differences estimate for whites is 0.029, and for African Americans, it is 0.071. The unweighted value for whites and for African Americans are 0.028 and 0.076, respectively" [@article]. We are to assume that the confidence intervals are similart in the unweighted values. 
+
+# Replication
+
+I successfully replicated Figure 1 of the paper, which depicted the main findings from the experiment. The code for this can be found in the Appendix and on my Github Repo. 
+
+```{r, background, cache = TRUE, include=FALSE}
+
+###### 1) Individual Analysis
+#### Outside of R we impute race and geocode the voters.
+#### The gecoding and subsetting of voters was done with ArcGIS
+#### To maintain the anonymity of voters, the entire voterfile is not made available with this replication 
+
+
+##load voterfile and impuated race data
+load(file = "data/Voterfile1992.RData")
+load(file = "data/race_imputation.RData") 
+
+
+## Q: What is the proportion of people we impute as white and black, pre and post-riot?
+## Tables 2, 3, H.1, and H.2 and Figure H.1
+out = vf %>%
+  dplyr::select(imputed_race_name, age, treat, DISTANCE) %>%
+  dplyr::group_by(treat) %>%
+  dplyr::summarise(pct_black = mean(imputed_race_name=="black", na.rm=T),
+                   pct_white = mean(imputed_race_name=="white", na.rm=T),
+                   avg_age = mean(age),
+                   dist = mean(DISTANCE),
+                   count = n())
+
+## For Appendix figures with confidence intervials, remove people we imputed using only geography
+vf = vf[!is.na(vf$pos_white),]
+
+########### Appendix Table C.3, generating EI estimates
+
+set.seed(12345) ##set seed to make output constant
+
+#######################################
+##### 2) Precinct-level analysis #####
+#######################################
+
+options(stringsAsFactors = FALSE)
+
+## Set up ballot initiative data, run EI
+
+# Start with election data
+edu90 = read.csv("data/election_data_121_123.csv")[,-c(1,8)] # remove rowname var
+edu92 = read.csv("data/election_data_152_153.csv")[,-c(1,8)]
+merged_final = merge(edu90, edu92, by="precinct")
+merged_final$precinct = as.character(merged_final$precinct)
+colnames(merged_final) = c("precinct", "ballots_cast_90", "P121Y", "P121N", "P123Y", "P123N", 
+                           "ballots_cast_92", "P152Y", "P152N", "P153Y", "P153N")
+
+merged_final$pct_pubschool_90 = merged_final$P123Y/merged_final$ballots_cast_90
+merged_final$pct_pubschool_92 = merged_final$P152Y/merged_final$ballots_cast_92
+merged_final$pct_highered_90 = merged_final$P121Y/merged_final$ballots_cast_90
+merged_final$pct_highered_92 = merged_final$P153Y/merged_final$ballots_cast_92
+
+merged_final$pubschool_dif = merged_final$pct_pubschool_92 - merged_final$pct_pubschool_90
+merged_final$highered_dif = merged_final$pct_highered_92 - merged_final$pct_highered_90
+merged_final$edu_dif = merged_final$pubschool_dif - merged_final$highered_dif
+
+merged_final$pct_pubschool_92_N = 1-merged_final$pct_pubschool_92
+merged_final$pct_pubschool_90_N = 1-merged_final$pct_pubschool_90
+merged_final$pct_highered_92_N = 1-merged_final$pct_highered_92
+merged_final$pct_highered_90_N = 1-merged_final$pct_highered_90
+
+
+# Load in race data
+load("data/RacePercents92.RData") 
+merged_final = merge(data92, merged_final, by="precinct") #3982/5917, 67%
+
+merged_final$other = merged_final$pop18 - (merged_final$latino + merged_final$white+merged_final$black + merged_final$asian)
+merged_final$remainder = 1 - (merged_final$latinopct + merged_final$whitepct + merged_final$blackpct + merged_final$asianpct)
+
+
+## Set up the EI estimates
+## Clean up
+# remove rows with 0 race data 
+merged_final = merged_final[merged_final$pop18 > 0,] # minus 3 observations
+merged_final = merged_final[merged_final$remainder >= 0,] # minus 5 observations
+
+# Next, do the EI estimates
+
+form = cbind(pct_highered_90, pct_highered_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high90 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_high90$draws$Beta)
+df = data.frame(temp[grepl("whitepct.pct_highered_90\\.", names(temp))])
+colnames(df) = "white_highered_90"
+df$black_highered_90 = temp[grepl("blackpct.pct_highered_90\\.", names(temp))]
+df$latino_highered_90 = temp[grepl("latinopct.pct_highered_90\\.", names(temp))]
+df$asian_highered_90 = temp[grepl("asianpct.pct_highered_90\\.", names(temp))]
+df$other_highered_90 = temp[grepl("remainder.pct_highered_90\\.", names(temp))]
+
+## These EI outputs are LARGE, so best to do this in pieces.
+rm(eiout_high90)
+
+
+form = cbind(pct_highered_92, pct_highered_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high92 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_high92$draws$Beta)
+df$white_highered_92 = temp[grepl("whitepct.pct_highered_92\\.", names(temp))]
+df$black_highered_92 = temp[grepl("blackpct.pct_highered_92\\.", names(temp))]
+df$latino_highered_92 = temp[grepl("latinopct.pct_highered_92\\.", names(temp))]
+df$asian_highered_92 = temp[grepl("asianpct.pct_highered_92\\.", names(temp))]
+df$other_highered_92 = temp[grepl("remainder.pct_highered_92\\.", names(temp))]
+rm(eiout_high92)
+
+
+form = cbind(pct_pubschool_90, pct_pubschool_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub90 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_pub90$draws$Beta)
+df$white_pubschool_90 = temp[grepl("whitepct.pct_pubschool_90\\.", names(temp))]
+df$black_pubschool_90 = temp[grepl("blackpct.pct_pubschool_90\\.", names(temp))]
+df$latino_pubschool_90 = temp[grepl("latinopct.pct_pubschool_90\\.", names(temp))]
+df$asian_pubschool_90 = temp[grepl("asianpct.pct_pubschool_90\\.", names(temp))]
+df$other_pubschool_90 = temp[grepl("remainder.pct_pubschool_90\\.", names(temp))]
+rm(eiout_pub90)
+
+
+## Pub92
+form = cbind(pct_pubschool_92, pct_pubschool_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub92 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_pub92$draws$Beta)
+df$white_pubschool_92 = temp[grepl("whitepct.pct_pubschool_92\\.", names(temp))]
+df$black_pubschool_92 = temp[grepl("blackpct.pct_pubschool_92\\.", names(temp))]
+df$latino_pubschool_92 = temp[grepl("latinopct.pct_pubschool_92\\.", names(temp))]
+df$asian_pubschool_92 = temp[grepl("asianpct.pct_pubschool_92\\.", names(temp))]
+df$other_pubschool_92 = temp[grepl("remainder.pct_pubschool_92\\.", names(temp))]
+rm(eiout_pub92)
+rm(form)
+rm(temp)
+
+## Generate the dif-in-dif
+out = cbind(df, merged_final)
+
+out$white_pubdiff = out$white_pubschool_92 - out$white_pubschool_90
+out$black_pubdiff = out$black_pubschool_92 - out$black_pubschool_90
+out$latino_pubdiff = out$latino_pubschool_92 - out$latino_pubschool_90
+out$other_pubdiff = out$other_pubschool_92 - out$other_pubschool_90
+
+out$white_highdiff = out$white_highered_92 - out$white_highered_90
+out$black_highdiff = out$black_highered_92 - out$black_highered_90
+out$latino_highdiff = out$latino_highered_92 - out$latino_highered_90
+out$other_highdiff = out$other_highered_92 - out$other_highered_90
+
+out$white_edudiff = out$white_pubdiff - out$white_highdiff
+out$black_edudiff = out$black_pubdiff - out$black_highdiff
+out$latino_edudiff = out$latino_pubdiff - out$latino_highdiff
+out$other_edudiff = out$other_pubdiff - out$other_highdiff
+
+out$asian_pubdiff = out$asian_pubschool_92 - out$asian_pubschool_90
+out$asian_highdiff = out$asian_highered_92 - out$asian_highered_90
+out$asian_edudiff = out$asian_pubdiff - out$asian_highdiff
+
+### Generate the variance on the dif-in-dif
+## Take posterior draws for all four components, then add all 6 covariances together
+form = cbind(pct_highered_90, pct_highered_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high90 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp1 = eiout_high90$draws$Beta
+rm(eiout_high90)
+
+temp1b = temp1[,grepl("blackpct.pct_highered_90\\.", colnames(temp1))]
+temp1w = temp1[,grepl("whitepct.pct_highered_90\\.", colnames(temp1))]
+rm(temp1)
+gc()
+
+form = cbind(pct_highered_92, pct_highered_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high92 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp2 = eiout_high92$draws$Beta
+rm(eiout_high92)
+
+temp2b = temp2[,grepl("blackpct.pct_highered_92\\.", colnames(temp2))]
+temp2w = temp2[,grepl("whitepct.pct_highered_92\\.", colnames(temp2))]
+rm(temp2)
+
+
+form = cbind(pct_pubschool_92, pct_pubschool_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub92 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp4 =eiout_pub92$draws$Beta
+temp4b = temp4[,grepl("blackpct.pct_pubschool_92\\.", colnames(temp4))]
+temp4w = temp4[,grepl("whitepct.pct_pubschool_92\\.", colnames(temp4))]
+
+rm(eiout_pub92)
+rm(temp4)
+
+form = cbind(pct_pubschool_90, pct_pubschool_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub90 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp3 =eiout_pub90$draws$Beta
+temp3b = temp3[,grepl("blackpct.pct_pubschool_90\\.", colnames(temp3))]
+temp3w = temp3[,grepl("whitepct.pct_pubschool_90\\.", colnames(temp3))]
+
+rm(eiout_pub90)
+rm(temp3)
+rm(form)
+
+covs_w = sapply(1:ncol(temp1b), FUN=function(i) 2*cov(temp1w[,i], temp2w[,i]) +
+                  2*cov(temp1w[,i], temp3w[,i]) +
+                  2*cov(temp1w[,i], temp4w[,i]) + 
+                  2*cov(temp2w[,i], temp3w[,i]) + 
+                  2*cov(temp2w[,i], temp4w[,i]) + 
+                  2*cov(temp3w[,i], temp4w[,i]) + 
+                  var(temp1w[,i]) + var(temp2w[,i]) + var(temp3w[,i]) + var(temp4w[,i]))
+covs_b = sapply(1:ncol(temp1b), FUN=function(i) cov(temp1b[,i], temp2b[,1]) +
+                  2*cov(temp1b[,i], temp3b[,i]) +
+                  2*cov(temp1b[,i], temp4b[,i]) + 
+                  2*cov(temp2b[,i], temp3b[,i]) + 
+                  2*cov(temp2b[,i], temp4b[,i]) + 
+                  2*cov(temp3b[,i], temp4b[,i]) + 
+                  var(temp1b[,i]) + var(temp2b[,i]) + var(temp3b[,i]) + var(temp4b[,i]))
+sds_w = sqrt(covs_w)
+sds_b = sqrt(covs_b)
+
+
+## Add it to 'out'
+## Take the inverse
+out$black_edudiff_se = 1/sds_b
+out$white_edudiff_se = 1/sds_w
+
+## In text report means of EdDiff, section on 'Results: Changes in Policy Support
+b = read.csv("data/precinct_centroids.csv")[,c("precinct", "X", "Y")]
+out = out[out$precinct %in% b$precinct,]
+
+# edu_dif
+boot_one = function(){
+  samp = mosaic::sample(out, replace=T)
+  x = wtd.mean(x=samp$edu_dif, samp$pop18)
+  return(x)
+}
+reps = replicate(1000, boot_one())
+quantile(reps, c(0.975, 0.025)) 
+
+```
+
+## Figure 1 Replicated
+
+```{r, fig1, eval=TRUE, echo=FALSE, warning=FALSE}
+
+## Figure 1: Dif-in-Dif
+
+cairo_pdf("Figure_1.pdf")
+par(mfrow=c(3,1), mar=c(3,5,1,2))
+
+hist(out$edu_dif, xlim = c(-0.1, 0.2), las=1, cex.main=1.5,ylab = "Frequency",
+     xlab = "", main="Difference in Differences: All Voters",
+     breaks = seq(-.7, .3, by=0.002))
+lines(x=c(0,0), y=c(0,100), lty="dotted", lwd=2)
+lines(x=rep(weighted.mean(out$edu_dif, w=out$pop18, na.rm=T),2), y=c(0,100), lwd=3, lty="dashed")
+
+
+hist(out$white_edudiff, xlim = c(-0.1, 0.2),las=1, cex.main=1.5,ylab = "Frequency",
+     xlab = "", main="White Voters", breaks=seq(-.8, .4, by=0.002))
+lines(x=c(0,0), y=c(0,220), lty="dotted", lwd=2) 
+lines(x=rep(weighted.mean(out$white_edudiff, w=out$white_edudiff_se, na.rm=T),2), y=c(0,220),  lwd=3, lty="dashed")
+
+hist(out$black_edudiff, xlim = c(-0.1, 0.2),las=1, cex.main=1.5,ylab = "Frequency",
+     xlab = "", main="African American Voters", breaks=seq(-.7, .3, by=0.002))
+lines(x=rep(weighted.mean(out$black_edudiff,w=out$black_edudiff_se, na.rm=T),2), y=c(0,350),  lwd=3, lty="dashed")
+lines(x=c(0,0), y=c(0,350), lty="dotted", lwd=2)
+
+#dev.off()
+
+```
+
+
+
+# Extension
+
+For my extension, I ran a similar difference-in-differences model on Asian American voters and found that Asian American voters became slightly less liberal (or less  in favor of k-12 education, as the authors define it) and voted more in support for increased university funding. This indicates that the riot had a negative shock for Asian American voters. The weighted mean is -0.0043 and the 95% Confidence Interval is [-0.0059, -0.0027]. Their distribution is depicted below. 
+
+```{r, extension, include = FALSE, cache= TRUE}
+### Generate the variance on the dif-in-dif
+## Take posterior draws for all four components, then add all 6 covariances together
+form = cbind(pct_highered_90, pct_highered_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high90 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp1 = eiout_high90$draws$Beta
+rm(eiout_high90)
+
+temp1a = temp1[,grepl("asianpct.pct_highered_90\\.", colnames(temp1))]
+rm(temp1)
+gc()
+
+form = cbind(pct_highered_92, pct_highered_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high92 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp2 = eiout_high92$draws$Beta
+rm(eiout_high92)
+
+temp2a = temp2[,grepl("asianpct.pct_highered_92\\.", colnames(temp2))]
+rm(temp2)
+
+
+form = cbind(pct_pubschool_92, pct_pubschool_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub92 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp4 =eiout_pub92$draws$Beta
+temp4a = temp4[,grepl("asianpct.pct_pubschool_92\\.", colnames(temp4))]
+
+rm(eiout_pub92)
+rm(temp4)
+
+form = cbind(pct_pubschool_90, pct_pubschool_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub90 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp3 =eiout_pub90$draws$Beta
+temp3a = temp3[,grepl("asianpct.pct_pubschool_90\\.", colnames(temp3))]
+
+rm(eiout_pub90)
+rm(temp3)
+rm(form)
+
+covs_a = sapply(1:ncol(temp1a), FUN=function(i) 2*cov(temp1a[,i], temp2a[,i]) +
+                  2*cov(temp1a[,i], temp3a[,i]) +
+                  2*cov(temp1a[,i], temp4a[,i]) + 
+                  2*cov(temp2a[,i], temp3a[,i]) + 
+                  2*cov(temp2a[,i], temp4a[,i]) + 
+                  2*cov(temp3a[,i], temp4a[,i]) + 
+                  var(temp1a[,i]) + var(temp2a[,i]) + var(temp3a[,i]) + var(temp4a[,i]))
+sds_a = sqrt(covs_a)
+
+## Add it to 'out'
+## Take the inverse
+out$asian_edudiff_se = 1/sds_a
+
+## In text report means of EdDiff, section on 'Results: Changes in Policy Support
+b = read.csv("data/precinct_centroids.csv")[,c("precinct", "X", "Y")]
+out = out[out$precinct %in% b$precinct,]
+
+# edu_dif
+boot_one = function(){
+  samp = mosaic::sample(out, replace=T)
+  x = wtd.mean(x=samp$edu_dif, samp$pop18)
+  return(x)
+}
+reps = replicate(1000, boot_one())
+quantile(reps, c(0.975, 0.025)) 
+
+## Results: Changes in Policy Support: weighted mean of EdDiff 
+#cat("In text report means of EdDiff, section on 'Results: Changes in Policy Support'\n")
+#print(wtd.mean(out$edu_dif, out$pop18))
+#print(wtd.mean(out$edu_dif, out$pop18) + 1.97*sqrt(wtd.var(out$edu_dif, out$pop18)/length(out))) #upper bound
+#print(wtd.mean(out$edu_dif, out$pop18) - 1.97*sqrt(wtd.var(out$edu_dif, out$pop18)/length(out))) #lower bound
+
+
+## Results: Changes in Policy Support: weighted mean of EdDiff 
+#cat("In text report means of EdDiff by race, section on 'Results by Race'\n")
+# asian edu_diff
+#cat("asian \n")
+boot_one = function(){
+  samp = mosaic::sample(out, replace=T)
+  x = wtd.mean(x=samp$asian_edudiff, samp$asian_edudiff_se)
+  return(x)
+}
+reps = replicate(1000, boot_one())
+quantile(reps, c(0.975, 0.025))
+#print(wtd.mean(out$asian_edudiff, out$asian_edudiff_se))
+
+#print(wtd.mean(out$asian_edudiff, out$asian_edudiff_se) + 1.97*sqrt(wtd.var(out$asian_edudiff, out$asian_edudiff_se)/length(out))) #upper bound
+#print(wtd.mean(out$asian_edudiff, out$asian_edudiff_se) - 1.97*sqrt(wtd.var(out$asian_edudiff, out$asian_edudiff_se)/length(out))) #lower bound
+
+
+# weighted t.test
+#cat("asian t-test \n")
+
+#print(wtd.t.test(x=out$asian_edudiff, y = 0, weight = out$asian_edudiff_se))
+```
+
+
+```{r, extension2, warning = FALSE, cache= TRUE, echo=FALSE}
+# Making a distribution
+hist(out$asian_edudiff, xlim = c(-0.1, 0.2),las=1, cex.main=1.5,ylab = "Frequency",
+     xlab = "", main="Asian Voters", breaks=seq(-.8, .4, by=0.002))
+lines(x=c(0,0), y=c(0,220), lty="dotted", lwd=2) 
+lines(x=rep(weighted.mean(out$asian_edudiff, w=out$asian_edudiff_se, na.rm=T),2), y=c(0,220),  lwd=3, lty="dashed")
+
+
+```
+
+# Appendix 
+
+```{r, backup graphic, include=FALSE, echo=FALSE, warning=FALSE, out.width= '100%'}
+
+load(file = "data/Voterfile1992.RData")
+load(file = "data/race_imputation.RData") 
+
+# Here I am reading in the precinct results for the measures of concern in the 1990 election prior to the riot. prop 121 refers to the pre-riot attitude towards higher education and prop 123 refers to the pre-riot attitude towards public schools. I added variables to connote attitude and calculated the total percent of yes votes over yes + no votes for each precinct on each proposition. This summarizes atttitude towards those issues
+pre_votes <- read_csv("data/election_data_121_123.csv",
+  col_types = cols(
+                X1 = col_double(),
+                precinct = col_character(),
+                ballots_cast_90 = col_double(),
+                y121 = col_double(),
+                n121 = col_double(),
+                y123 = col_double(),
+                n123 = col_double(),
+                page_90 = col_double()
+                )) %>% 
+  mutate(highed_90 = y121/(y121+n121),
+            pubschool_90 = y123/(y123 + n123))
+
+# Here I am reading in the precinct results for the measures of concern in the 1992 election after the riot. prop 153 refers to the post-riot attitude towards higher education and prop 152 refers to the post-riot attitude towards public schools. I added variables to connote attitude and calculated the total percent of yes votes over yes + no votes for each precinct on each proposition. This summarizes atttitude towards those issues
+post_votes <- read_csv("data/election_data_152_153.csv",
+                       col_types = cols(
+                                      X1 = col_double(),
+                                      precinct = col_character(),
+                                      ballots_cast_92 = col_double(),
+                                      y152 = col_double(),
+                                      n152 = col_double(),
+                                      y153 = col_double(),
+                                      n153 = col_double(),
+                                      page_92 = col_double()
+                                      )) %>% 
+  mutate(highed_92 = y153/(y153+n153),
+            pubschool_92 = y152/(y152 + n152))
+
+#then I merged the pre and the post vote by precinct in order to calculate a crude difference-in-difference estimate by subtracting pubschool90 from pubschool92 and highed90 from highed92 and then finding the difference
+
+diff = merge(pre_votes, post_votes, by="precinct") %>% 
+  mutate(pubschool_diff = pubschool_92 - pubschool_90,
+         highed_diff = highed_92 - highed_90,
+         ed_diff = pubschool_diff - highed_diff)
+
+#Then I'm going to create a histogram of the ed_diff by precinct. I skipped over so many important steps in cleaning and prepping the data, so I'm not surprised that the result is not what was realized in the paper. The actual results in the paper show that the diff-in-diff estimate for all voters by precinct is 0.05, my red mean life shows a line much less than that, though it IS greater than no impact. 
+
+graph <- diff %>% 
+  #select(ed_diff, precinct) %>% 
+  ggplot(aes(x=ed_diff)) +
+  geom_histogram(bins = 100) +
+  xlim(c(-0.1, 0.2)) +
+  labs(title = "Difference in Differences for All Voters: \nSome Evidence that the Riot  Influenced Political Opinions",
+       subtitle = "The change in support for public schools across precincts between 1990 and 1992, \n net the change in support for universities",
+       x = "Difference in Attitudes Towards Public Schools",
+       y = "Number of Precincts",
+       caption = "Data Source: Ryan Enos from Harvard Dataverse") + 
+  geom_vline(xintercept=mean(diff$ed_diff), color="red") +
+  geom_vline(xintercept = 0, col="blue", linetype= "dashed")+
+  cairo_pdf()
+
+
+```
+
+
+```{r, graphic2, include = FALSE, echo=FALSE, warning=FALSE, out.width= '100%'}
+
+graph
+
+```
+
+
+```{r, appendix, include=FALSE, cache=TRUE}
+
+
+###################################################
+## This script proceeds in four parts. 
+## 1) Individual-level analysis
+## 2) Precinct-level analysis
+## 3) Voter file analysis
+## 4) Survey data analysis
+##################################################
+
+
+###### 1) Individual Analysis
+#### Outside of R we impute race and geocode the voters.
+#### The gecoding and subsetting of voters was done with ArcGIS
+#### To maintain the anonymity of voters, the entire voterfile is not made available with this replication 
+
+
+##load voterfile and impuated race data
+load(file = "data/Voterfile1992.RData")
+load(file = "data/race_imputation.RData") 
+
+# THIS SECTION IS ABOUT RACE IMPUTATIONS AND TESTING THE VALIDITY OF THE IMPUTATIONS. Their imputation procedure has 3 steps: 
+# (1)  we match the census surname race probability file to the voter file; 89% of individuals have an exact match.  For the remaining 11% , we perform a fuzzy match to identify the closest surname; this reduces error from typos in the voter file and multiple forms of the same surname. After this step, 38 individuals remain with no surname match within our threshold of string distance.
+# (2)  geolocating each registered voter’s address and then locating that address within a census block, then merging that census block ID to a file of race by census block. Due to geolocating errors, roughly 130,000 individuals were placed in census blocks with zero population. 
+# (3)  The final step involves a Bayesian update in which we take the census information as a prior and then update it using the surname probabilities, producing a posterior of racial probabilities.
+
+## Q: What is the proportion of people we impute as white and black, pre and post-riot?
+## Tables 2, 3, H.1, and H.2 and Figure H.1
+out = vf %>%
+  dplyr::select(imputed_race_name, age, treat, DISTANCE) %>%
+  dplyr::group_by(treat) %>%
+  dplyr::summarise(pct_black = mean(imputed_race_name=="black", na.rm=T),
+                   pct_white = mean(imputed_race_name=="white", na.rm=T),
+                   avg_age = mean(age),
+                   dist = mean(DISTANCE),
+                   count = n())
+
+## For Appendix figures with confidence intervials, remove people we imputed using only geography
+vf = vf[!is.na(vf$pos_white),]
+
+## Appendix Figure H.1: race imputation distributions
+blacks_reg_pre = vf[vf$imputed_race_name == "black" & vf$weekfrom >= 0,]
+whites_reg_pre = vf[vf$imputed_race_name == "white"& vf$weekfrom >= 0,]
+blacks_reg_post = vf[vf$imputed_race_name == "black"& vf$weekfrom < 0,]
+whites_reg_post = vf[vf$imputed_race_name == "white"& vf$weekfrom < 0,]
+
+pdf('data/Figure_H1.pdf')
+par(mfrow=c(3,2))
+hist(blacks$pos_black, breaks=200, xlab="P(Black)", main="All Registrants", freq=F, ylim=c(0,80))
+hist(whites$pos_white, breaks=200, xlab="P(White)", main="", freq=F, ylim=c(0,80))
+hist(blacks_reg_pre$pos_black, breaks=200, xlab="P(Black)", main="Pre-Riot", freq=F, ylim=c(0,50))
+hist(whites_reg_pre$pos_white, breaks=200, xlab="P(White)", main="", freq=F, ylim=c(0,50))
+hist(blacks_reg_post$pos_black, breaks=200, xlab="P(Black)", main="Post-Riot", freq=F, ylim=c(0,70))
+hist(whites_reg_post$pos_white, breaks=200, xlab="P(White)", main="", freq=F, ylim=c(0,70))
+dev.off()
+
+# This could be where they mentioned I extend to Asians? They seem to have an Asian column here
+
+#### Appendix Supplement to Tables 2 and 3 (see Appendix H)
+## Draw from the race posteriors and get the distribution of pct black and pct white pre- and post-riot
+
+## Select only the columns that are race imputations
+temp1 = vf[,59:64]
+colnames(temp1) = c("white", "black", "asian", "hispanic", "native", "other")
+# Draw the bootstrap races
+set.seed(02138)
+reps = Hmisc::rMultinom(temp1, m=1000) #an N x M matrix: N registrants, 1000 imputed races based on the imputation posteriors
+temp1$treat = vf$treat
+
+#START POTENTIALLY REDOING FOR ASIAN HERE? CREATE NEW TABLE WITH ASIAN?
+
+# Appendix Table H.1: Supplement to Table 2 
+## Generate 1000 bootstrap tables
+# Using the same dplyr call as before, but replacing imputed_race with newrace, the bootstrapped race
+tab2_reps = lapply(1:1000, FUN=function(x) {
+  test = temp1
+  test$newrace = reps[,x] #for each draw, extract race distribution for each individual
+  out1 = test %>% dplyr::group_by(treat) %>%
+    dplyr::summarise(pct_black = mean(newrace=="black", na.rm=T), #extract prob that each indiv is black or white, based on that distribution; summarize, for each of 1000 draws, the prob white and prob black in that set of draws 
+                     pct_white = mean(newrace=="white", na.rm=T))
+      })
+black_control = quantile(sapply(tab2_reps, FUN=function(x) c(x)$pct_black[1]), c(0.05, 0.5, 0.95))
+white_control = quantile(sapply(tab2_reps, FUN=function(x) c(x)$pct_white[1]), c(0.05, 0.5, 0.95))
+black_treat = quantile(sapply(tab2_reps, FUN=function(x) c(x)$pct_black[2]), c(0.05, 0.5, 0.95))
+white_treat = quantile(sapply(tab2_reps, FUN=function(x) c(x)$pct_white[2]), c(0.05, 0.5, 0.95))
+
+tab2_sup = matrix(c(black_control, black_treat,white_control, white_treat), nrow=2, byrow=T)
+colnames(tab2_sup) = c("Pre-Riot (lower)", "Pre-Riot (median)", "Pre-Riot (upper)",
+                       "Post-Riot (lower)", "Post-Riot (median)", "Post-Riot (upper)")
+rownames(tab2_sup) = c("African American", "White")
+
+print(xtable(tab2_sup, digits=3),"data/Table_H1.tex", type = 'latex')
+
+## Table 2:
+out[,2] = tab2_sup[1,c(2,5)]
+out[,3] = tab2_sup[2,c(2,5)]
+
+print(xtable(t(out),digits = 3), "data/Table_2.tex", type = 'latex')
+
+
+########### Appendix Table C.3, generating EI estimates
+
+set.seed(12345) ##set seed to make output constant
+
+#######################################
+##### 2) Precinct-level analysis #####
+#######################################
+
+options(stringsAsFactors = FALSE)
+
+## Set up ballot initiative data, run EI
+
+# Start with election data
+edu90 = read.csv("data/election_data_121_123.csv")[,-c(1,8)] # remove rowname var
+edu92 = read.csv("data/election_data_152_153.csv")[,-c(1,8)]
+merged_final = merge(edu90, edu92, by="precinct")
+merged_final$precinct = as.character(merged_final$precinct)
+colnames(merged_final) = c("precinct", "ballots_cast_90", "P121Y", "P121N", "P123Y", "P123N", 
+                           "ballots_cast_92", "P152Y", "P152N", "P153Y", "P153N")
+
+merged_final$pct_pubschool_90 = merged_final$P123Y/merged_final$ballots_cast_90
+merged_final$pct_pubschool_92 = merged_final$P152Y/merged_final$ballots_cast_92
+merged_final$pct_highered_90 = merged_final$P121Y/merged_final$ballots_cast_90
+merged_final$pct_highered_92 = merged_final$P153Y/merged_final$ballots_cast_92
+
+merged_final$pubschool_dif = merged_final$pct_pubschool_92 - merged_final$pct_pubschool_90
+merged_final$highered_dif = merged_final$pct_highered_92 - merged_final$pct_highered_90
+merged_final$edu_dif = merged_final$pubschool_dif - merged_final$highered_dif
+
+merged_final$pct_pubschool_92_N = 1-merged_final$pct_pubschool_92
+merged_final$pct_pubschool_90_N = 1-merged_final$pct_pubschool_90
+merged_final$pct_highered_92_N = 1-merged_final$pct_highered_92
+merged_final$pct_highered_90_N = 1-merged_final$pct_highered_90
+
+
+# Load in race data
+load("data/RacePercents92.RData") 
+merged_final = merge(data92, merged_final, by="precinct") #3982/5917, 67%
+
+merged_final$other = merged_final$pop18 - (merged_final$latino + merged_final$white+merged_final$black + merged_final$asian)
+merged_final$remainder = 1 - (merged_final$latinopct + merged_final$whitepct + merged_final$blackpct + merged_final$asianpct)
+
+
+## Set up the EI estimates
+## Clean up
+# remove rows with 0 race data 
+merged_final = merged_final[merged_final$pop18 > 0,] # minus 3 observations
+merged_final = merged_final[merged_final$remainder >= 0,] # minus 5 observations
+
+# Next, do the EI estimates
+
+form = cbind(pct_highered_90, pct_highered_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high90 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_high90$draws$Beta)
+df = data.frame(temp[grepl("whitepct.pct_highered_90\\.", names(temp))])
+colnames(df) = "white_highered_90"
+df$black_highered_90 = temp[grepl("blackpct.pct_highered_90\\.", names(temp))]
+df$latino_highered_90 = temp[grepl("latinopct.pct_highered_90\\.", names(temp))]
+df$asian_highered_90 = temp[grepl("asianpct.pct_highered_90\\.", names(temp))]
+df$other_highered_90 = temp[grepl("remainder.pct_highered_90\\.", names(temp))]
+
+## These EI outputs are LARGE, so best to do this in pieces.
+rm(eiout_high90)
+
+
+form = cbind(pct_highered_92, pct_highered_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high92 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_high92$draws$Beta)
+df$white_highered_92 = temp[grepl("whitepct.pct_highered_92\\.", names(temp))]
+df$black_highered_92 = temp[grepl("blackpct.pct_highered_92\\.", names(temp))]
+df$latino_highered_92 = temp[grepl("latinopct.pct_highered_92\\.", names(temp))]
+df$asian_highered_92 = temp[grepl("asianpct.pct_highered_92\\.", names(temp))]
+df$other_highered_92 = temp[grepl("remainder.pct_highered_92\\.", names(temp))]
+rm(eiout_high92)
+
+
+form = cbind(pct_pubschool_90, pct_pubschool_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub90 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_pub90$draws$Beta)
+df$white_pubschool_90 = temp[grepl("whitepct.pct_pubschool_90\\.", names(temp))]
+df$black_pubschool_90 = temp[grepl("blackpct.pct_pubschool_90\\.", names(temp))]
+df$latino_pubschool_90 = temp[grepl("latinopct.pct_pubschool_90\\.", names(temp))]
+df$asian_pubschool_90 = temp[grepl("asianpct.pct_pubschool_90\\.", names(temp))]
+df$other_pubschool_90 = temp[grepl("remainder.pct_pubschool_90\\.", names(temp))]
+rm(eiout_pub90)
+
+
+## Pub92
+form = cbind(pct_pubschool_92, pct_pubschool_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub92 = ei(form, id="precinct", total = "pop18", data=merged_final, sample=20000)
+temp = colMeans(eiout_pub92$draws$Beta)
+df$white_pubschool_92 = temp[grepl("whitepct.pct_pubschool_92\\.", names(temp))]
+df$black_pubschool_92 = temp[grepl("blackpct.pct_pubschool_92\\.", names(temp))]
+df$latino_pubschool_92 = temp[grepl("latinopct.pct_pubschool_92\\.", names(temp))]
+df$asian_pubschool_92 = temp[grepl("asianpct.pct_pubschool_92\\.", names(temp))]
+df$other_pubschool_92 = temp[grepl("remainder.pct_pubschool_92\\.", names(temp))]
+rm(eiout_pub92)
+rm(form)
+rm(temp)
+
+## Generate the dif-in-dif
+out = cbind(df, merged_final)
+
+out$white_pubdiff = out$white_pubschool_92 - out$white_pubschool_90
+out$black_pubdiff = out$black_pubschool_92 - out$black_pubschool_90
+out$latino_pubdiff = out$latino_pubschool_92 - out$latino_pubschool_90
+out$other_pubdiff = out$other_pubschool_92 - out$other_pubschool_90
+
+out$white_highdiff = out$white_highered_92 - out$white_highered_90
+out$black_highdiff = out$black_highered_92 - out$black_highered_90
+out$latino_highdiff = out$latino_highered_92 - out$latino_highered_90
+out$other_highdiff = out$other_highered_92 - out$other_highered_90
+
+out$white_edudiff = out$white_pubdiff - out$white_highdiff
+out$black_edudiff = out$black_pubdiff - out$black_highdiff
+out$latino_edudiff = out$latino_pubdiff - out$latino_highdiff
+out$other_edudiff = out$other_pubdiff - out$other_highdiff
+
+out$asian_pubdiff = out$asian_pubschool_92 - out$asian_pubschool_90
+out$asian_highdiff = out$asian_highered_92 - out$asian_highered_90
+out$asian_edudiff = out$asian_pubdiff - out$asian_highdiff
+
+
+# WHAT IS THIS SECTION BELOW DOING? for asian: everywhere they do blackpct just do asianpct?
+
+### Generate the variance on the dif-in-dif
+## Take posterior draws for all four components, then add all 6 covariances together
+form = cbind(pct_highered_90, pct_highered_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high90 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp1 = eiout_high90$draws$Beta
+rm(eiout_high90)
+
+temp1b = temp1[,grepl("blackpct.pct_highered_90\\.", colnames(temp1))]
+temp1w = temp1[,grepl("whitepct.pct_highered_90\\.", colnames(temp1))]
+rm(temp1)
+gc()
+
+form = cbind(pct_highered_92, pct_highered_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_high92 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp2 = eiout_high92$draws$Beta
+rm(eiout_high92)
+
+temp2b = temp2[,grepl("blackpct.pct_highered_92\\.", colnames(temp2))]
+temp2w = temp2[,grepl("whitepct.pct_highered_92\\.", colnames(temp2))]
+rm(temp2)
+
+
+form = cbind(pct_pubschool_92, pct_pubschool_92_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub92 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp4 =eiout_pub92$draws$Beta
+temp4b = temp4[,grepl("blackpct.pct_pubschool_92\\.", colnames(temp4))]
+temp4w = temp4[,grepl("whitepct.pct_pubschool_92\\.", colnames(temp4))]
+
+rm(eiout_pub92)
+rm(temp4)
+
+form = cbind(pct_pubschool_90, pct_pubschool_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
+eiout_pub90 = ei(form, id="precinct", total = "pop18", data=out, sample=5000)
+temp3 =eiout_pub90$draws$Beta
+temp3b = temp3[,grepl("blackpct.pct_pubschool_90\\.", colnames(temp3))]
+temp3w = temp3[,grepl("whitepct.pct_pubschool_90\\.", colnames(temp3))]
+
+rm(eiout_pub90)
+rm(temp3)
+rm(form)
+
+covs_w = sapply(1:ncol(temp1b), FUN=function(i) 2*cov(temp1w[,i], temp2w[,i]) +
+                  2*cov(temp1w[,i], temp3w[,i]) +
+                  2*cov(temp1w[,i], temp4w[,i]) + 
+                  2*cov(temp2w[,i], temp3w[,i]) + 
+                  2*cov(temp2w[,i], temp4w[,i]) + 
+                  2*cov(temp3w[,i], temp4w[,i]) + 
+                  var(temp1w[,i]) + var(temp2w[,i]) + var(temp3w[,i]) + var(temp4w[,i]))
+covs_b = sapply(1:ncol(temp1b), FUN=function(i) cov(temp1b[,i], temp2b[,1]) +
+                  2*cov(temp1b[,i], temp3b[,i]) +
+                  2*cov(temp1b[,i], temp4b[,i]) + 
+                  2*cov(temp2b[,i], temp3b[,i]) + 
+                  2*cov(temp2b[,i], temp4b[,i]) + 
+                  2*cov(temp3b[,i], temp4b[,i]) + 
+                  var(temp1b[,i]) + var(temp2b[,i]) + var(temp3b[,i]) + var(temp4b[,i]))
+sds_w = sqrt(covs_w)
+sds_b = sqrt(covs_b)
+
+
+## Add it to 'out'
+## Take the inverse
+out$black_edudiff_se = 1/sds_b
+out$white_edudiff_se = 1/sds_w
+
+## In text report means of EdDiff, section on 'Results: Changes in Policy Support
+b = read.csv("data/precinct_centroids.csv")[,c("precinct", "X", "Y")]
+out = out[out$precinct %in% b$precinct,]
+
+# edu_dif
+boot_one = function(){
+  samp = mosaic::sample(out, replace=T)
+  x = wtd.mean(x=samp$edu_dif, samp$pop18)
+  return(x)
+}
+reps = replicate(1000, boot_one())
+quantile(reps, c(0.975, 0.025)) 
+
+## Results: Changes in Policy Support: weighted mean of EdDiff 
+cat("In text report means of EdDiff, section on 'Results: Changes in Policy Support'\n")
+print(wtd.mean(out$edu_dif, out$pop18))
+print(wtd.mean(out$edu_dif, out$pop18) + 1.97*sqrt(wtd.var(out$edu_dif, out$pop18)/length(out))) #upper bound
+print(wtd.mean(out$edu_dif, out$pop18) - 1.97*sqrt(wtd.var(out$edu_dif, out$pop18)/length(out))) #lower bound
+
+
+## Results: Changes in Policy Support: weighted mean of EdDiff 
+cat("In text report means of EdDiff by race, section on 'Results by Race'\n")
+# white edu_diff
+cat("whites \n")
+boot_one = function(){
+  samp = mosaic::sample(out, replace=T)
+  x = wtd.mean(x=samp$white_edudiff, samp$white_edudiff_se)
+  return(x)
+}
+reps = replicate(1000, boot_one())
+quantile(reps, c(0.975, 0.025))
+print(wtd.mean(out$white_edudiff, out$white_edudiff_se))
+
+print(wtd.mean(out$white_edudiff, out$white_edudiff_se) + 1.97*sqrt(wtd.var(out$white_edudiff, out$white_edudiff_se)/length(out)))
+print(wtd.mean(out$white_edudiff, out$white_edudiff_se) - 1.97*sqrt(wtd.var(out$white_edudiff, out$white_edudiff_se)/length(out)))
+
+
+# black edu_diff
+cat("Blacks \n")
+boot_one = function(){
+  samp = mosaic::sample(out, replace=T)
+  x = wtd.mean(x=samp$black_edudiff, samp$black_edudiff_se)
+  return(x)
+}
+reps = replicate(1000, boot_one())
+quantile(reps, c(0.975, 0.025))
+print(wtd.mean(out$black_edudiff, out$black_edudiff_se))
+
+print(wtd.mean(out$black_edudiff, out$black_edudiff_se) + 1.97*sqrt(wtd.var(out$black_edudiff, out$black_edudiff_se)/length(out)))
+print(wtd.mean(out$black_edudiff, out$black_edudiff_se) - 1.97*sqrt(wtd.var(out$black_edudiff, out$black_edudiff_se)/length(out)))
+
+
+# weighted t.test
+cat("white/Black t-test \n")
+
+print(wtd.t.test(x=out$white_edudiff, y = out$black_edudiff, weight = out$white_edudiff_se, weighty = out$black_edudiff_se))
+```
+
+
