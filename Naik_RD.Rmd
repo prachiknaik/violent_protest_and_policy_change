@@ -111,7 +111,7 @@ The first assumption is satisfied, given that there IS spatial autocorrelation (
 
 # Replication
 
-I successfully replicated Figure 1 of the paper, which depicted the main findings from the experiment. The code for this can be found in the Appendix and on my Github Repo. 
+I successfully replicated Figure 1 of the paper, which depicted the main findings from the experiment. The code for this can be found in the Appendix and on my Github Repository.
 
 ```{r, background, cache = TRUE, include=FALSE}
 
