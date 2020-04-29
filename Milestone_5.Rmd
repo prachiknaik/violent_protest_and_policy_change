@@ -26,6 +26,8 @@ library(rstanarm)
 library(knitr)
 library(knitcitations)
 library(tidyverse)
+
+# daniel's method: embed [@title] into the sentence itself (give each source a different title in the .bib file and then it will auto populate in the references section. no code chunk under references section. all references need to be tagged. in writing somehwere)
 ```
 
 # Overview of "Can Violent Protest Change Local Policy Support? Evidence from the Aftermath of the 1992 Los Angeles Riot" by Ryan D. Enos
@@ -84,13 +86,14 @@ graph <- diff %>%
   ggplot(aes(x=ed_diff)) +
   geom_histogram(bins = 100) +
   xlim(c(-0.1, 0.2)) +
-  labs(title = "Difference in Differences for All Voters: Some Evidence that the Riot  Influenced Political Opinions",
-       subtitle = "The change in support for public schools across precincts between 1990 and 1992,  net the change in support for universities",
+  labs(title = "Difference in Differences for All Voters: \nSome Evidence that the Riot  Influenced Political Opinions",
+       subtitle = "The change in support for public schools across precincts between 1990 and 1992, \n net the change in support for universities",
        x = "Difference in Attitudes Towards Public Schools",
        y = "Number of Precincts",
        caption = "Data Source: Ryan Enos from Harvard Dataverse") + 
   geom_vline(xintercept=mean(diff$ed_diff), color="red") +
-  geom_vline(xintercept = 0, col="blue", linetype= "dashed")
+  geom_vline(xintercept = 0, col="blue", linetype= "dashed")+
+  cairo_pdf()
 
 graph
 
@@ -100,7 +103,8 @@ graph
 # Appendix
 
 ## My Reproduced Table
-```{r, table replication, echo=FALSE}
+```{r, echo=FALSE}
+
 out <- vf %>%
   dplyr::select(imputed_race_name, age, treat, DISTANCE) %>%
   dplyr::group_by(treat) %>%
@@ -117,18 +121,8 @@ columnnames <- c( "Before Riot", "After Riot")
 
 table2_p <- kable(out,
       col.names = columnnames,
-      caption = "TABLE 2: Demographics of Registrants
-Immediately Before and After the Riot. The
-'Before Riot' Column Includes New Registrants
-on the Five Weekdays Before the Riot (4/22–24
-and 4/27–28) and the 'After Riot' Column
-Includes the Five Weekdays After the Riots (5/
-4–8). All Variables are Proportions, Except for
-Age (years) and Distance (meters). Race
-Proportions are Calculated by Drawing From
-Registrants’ Imputed Posterior Race
-Probabilities") %>% 
-  kable_styling()
+      caption = "TABLE 2: Demographics of Registrants Immediately Before and After the Riot") %>% 
+  kable_styling(latex_options = "hold_position")
 
 table2_p
 
@@ -136,7 +130,7 @@ table2_p
 
 ## Original Table
 
-```{r, original Table 2, echo = FALSE, out.width='80%'}
+```{r, original Table 2, echo = FALSE, out.width='80%', fig.align="center"}
 
 include_graphics("Table_2.png")
 

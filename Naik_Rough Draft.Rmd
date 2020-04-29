@@ -47,6 +47,7 @@ library(stargazer)
 library(tidyverse)
 library(weights)
 library(xtable)
+library(grDevices)
 
 
 # daniel's method: embed [@title] into the sentence itself (give each source a different title in the .bib file and then it will auto populate in the references section. no code chunk under references section. all references need to be tagged. in writing somehwere)
@@ -60,9 +61,21 @@ Enos, Kaufman, and Sands (2019) show that the 1992 Los Angeles Riot— one of th
 
 The first paragraph is a review of the paper you are replicating. Flesh out the details. Tell us about the data and the model. Place it within the relevant literature, via a key citation or two. Highlight implications and caveats. Again, it is hard to summarize a 25 page paper in a paragraph. Do your best. Note that the paper’s own abstract is often a useful guide.
 
-This paper seeks to answer the following fundamental question: what, if any, impact can a violent protest have on changing political behavior? In order to explore this question, Enos, Kaufman, and Sands used a difference-in-differences approach to analyze measures of policy support before and after the 1992 Los Angeles Riot. The Riot was sparked by a series of events that began with the release of a video in which four White police officers were captured violently beating an unarmed black man named Rodney King on March 3, 1991. A little more than a year later, the four officers were subsequently acquitted by an all-White jury. Within hours of the verdict being announced, "a series of violent and destructive incidents occurred around the intersections of Florence Avenure and Normandie Avenue in south central LA, a predominantly African American neighborhood" that would serve as the Riot's epicenter [@article]. Though the Riot was a nonrandom event, the authors see the release of the video as exogenously timed in relation to the 1992 election. They were able to manipulate a certain symmetry in the 1990 vs 1992 ballot measures to stand for treatment and control measures. For the treatment, they chose to focus on policy measures concerning k-12 education; for the control, they chose to focus on policy measures concerning University education. The assumptions undergirding this decision will be discussed later on, but most salient here, is that the authors adopt the basic idea that the riot brought the racialized unequal allocation of public goods (k-12 education) to the forefront of voters' minds and thus impacted the way they voted on increasing educational spending. Analysis was conducted on the individual voter level instead of on the aggregate level in order to differentiate between racial and geographical effects. Using geocoded individual and precinct-level data, the authors were able to measure the effects of the riot on voters at any proximity to its epicenter. The effect of the Riot itself was estimated by "differencing out" the change in support for University funding (which was assumed to remain constant) from the difference in support for k-12 education funding measured via a population-weighted mean of "yes" votes for each of the 4 ballot initiatives under consideration, which the authors refer to as "EdDiff" [@article]. To further isolate the effect of the riot, the authors also cross-verified the correlation between EdDiff and proximity from the epicenter in order to check for omitted variable bias. The findings that the effect is more pronounced closer to the epicenter supports the authors' finding that the riot itself (as opposed to merely the beating and trial) was the mechanism behind the main difference-in-differences effect. Using Ecological Inference (EI) methods developed by Gary King, the authors used a combination of precinct-level digitized vote returns from the LA County registrar and UC Census Bureau demographic data to estimate individual voting behavior by racial group [@KingEI]. They input the demographic proportions of each precinct (what proportion of the precinct is White, African-American, Asian, etc) and the proportion of "yes" votes in each precinct for each of the four ballot iniatives. The difference-in-difference estimator helps answer the following counterfactual: "Among voters in the LA basin, how would support for public schools have changed in the absence of the video, trial, and subsequent riot?" [@article]. While it's difficult, if not impossible to disentangle the three events, the authors attempt to isolate the impact of the riot by posing the secondary counterfactual: "How would support for public schools have changed in the LA basin in the absence of the riot, conditional on the beating and trial happening?" [@article]. This question is answered by the heterogenous treatment effects by distance from the riot's epicenter. 
+This paper seeks to answer the following fundamental question: what, if any, impact can a violent protest have on changing political behavior? In order to explore this question, Enos, Kaufman, and Sands used a difference-in-differences approach to analyze measures of policy support before and after the 1992 Los Angeles Riot. The Riot was sparked by a series of events that began with the release of a video in which four White police officers were captured violently beating an unarmed black man named Rodney King on March 3, 1991. A little more than a year later, the four officers were subsequently acquitted by an all-White jury. Within hours of the verdict being announced, "a series of violent and destructive incidents occurred around the intersections of Florence Avenue and Normandie Avenue in South Central LA, a predominantly African American neighborhood," which would serve as the Riot's epicenter [@article]. Though the Riot was a nonrandom event, the authors see the release of the video as exogenously timed in relation to the 1992 election. They were able to manipulate a certain symmetry in the 1990 vs 1992 ballot measures to stand for treatment and control measures. For the treatment, they chose to measure support for policy measures concerning k-12 education; for the control, they chose to focus on policy measures concerning University education. The assumptions undergirding this decision will be discussed later on, but most salient here, is that the authors adopt the basic idea that the riot brought the racialized unequal allocation of public goods (k-12 education) to the forefront of voters' minds and thus impacted the way citizens voted on increasing k-12 educational spending. 
 
+Analysis was conducted on the individual voter level instead of on the aggregate level in order to differentiate between racial and geographical effects. Using geocoded individual and precinct-level data, the authors were able to measure the effects of the riot on voters at any proximity to its epicenter. The effect of the Riot itself was estimated by "differencing out" the change in support for University funding (which was assumed to remain constant) from the difference in support for k-12 education funding. Support was measured via a population-weighted mean of "yes" votes for each of the 4 ballot initiatives under consideration. The authors refer to the treatment effect as "EdDiff" [@article]. 
 
+$$EdDiff_{i} = (PubSchool_{i1992} - PubSchool_{i1990}) - (HigherEd_{i1992} - HigherEd_{i1990}).$$
+
+To further isolate the effect of the riot, the authors also cross-verified the correlation between EdDiff and proximity from the epicenter in order to check for omitted variable bias. The findings that the effect is more pronounced closer to the epicenter supports the authors' finding that the riot itself (as opposed to merely the beating and trial) was the mechanism behind the main difference-in-differences effect. Using Ecological Inference (EI) methods developed by Gary King, the authors used a combination of precinct-level digitized vote returns from the LA County registrar and UC Census Bureau demographic data to estimate individual voting behavior by racial group [@KingEI]. They input the demographic proportions of each precinct (what proportion of the precinct is White, African-American, Asian, etc) and the proportion of "yes" votes in each precinct for each of the four ballot iniatives. The difference-in-difference estimator helps answer the following counterfactual: "Among voters in the LA basin, how would support for public schools have changed in the absence of the video, trial, and subsequent riot?" [@article]. While it is difficult, if not impossible to disentangle the three events, the authors attempt to isolate the impact of the riot by posing the secondary counterfactual: "How would support for public schools have changed in the LA basin in the absence of the riot, conditional on the beating and trial happening?" [@article]. This question is answered by the heterogenous treatment effects by distance from the riot's epicenter-- EdDiff is larger closer to the epicenter. 
+
+My replication is focused on the main finding of the paper, Figure 1, which displays three histograms indicating the distribution of EdDiff for all voters, White voters, and Black voters for 1,676 precincts in the Los Angeles Basin. Each histogram shows a positive mean value for EdDiff, indicating an increase in support for public schools net of changes in support for universities. The authors conduct a t-test to construct confidence intervals around this weighted mean. In order to replicate these results, I combed through the replication code and data files the authors made available on the Harvard Dataverse [@data]. Ryan Enos had these files linked on his personal webpage (ryandenos.com). The files needed to replicate Figure 1 were: 
+(1) The 1992 Voter File; 
+(2) The file containing the results of the race imputation of voters, which was done outside of R using Census data and ArcGIS-based geolocation-coding into precincts. It is worth noting that I had to work with whatever assumptions went into the imputation itself, as no other race-based data was available;
+(3) The votes for Propositions 121 and 123 in 1990
+(4) The votes for Propostions 152 and 153 in 1992
+
+The I used R to conduct this analysis [@R]. 
 The second paragraph provides more details on your replications. Mention that you used R, and provide an citation to R in your bibliography. (See citation().) Cite the location from which you got the data and code for your replication. (This might be to the Dataverse, a webpage or “personal communication” with the author.) Provide a footnote with a link to your repo.
 
 The third and fourth paragraphs are more flexible. Indeed, they might be only one paragraph or they might be several. What did you do? What did you find?
@@ -182,9 +195,8 @@ For my extension, I plan to conduct a permutation test as a quantitative evaluat
 Forthcoming 
 
 # Appendix 
-```{r, include = FALSE, eval=FALSE}
+```{r APPENDIX, include=FALSE, cache=TRUE}
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # This neat snippet sets your working directory to wherever the script is located!
 
 ###################################################
@@ -203,8 +215,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 ##load voterfile and impuated race data
-load("Voterfile1992.RData")
-load("race_imputation.RData") 
+load(file = "data/Voterfile1992.RData")
+load(file = "data/race_imputation.RData") 
 
 # THIS SECTION IS ABOUT RACE IMPUTATIONS AND TESTING THE VALIDITY OF THE IMPUTATIONS. Their imputation procedure has 3 steps: 
 # (1)  we match the census surname race probability file to the voter file; 89% of individuals have an exact match.  For the remaining 11% , we perform a fuzzy match to identify the closest surname; this reduces error from typos in the voter file and multiple forms of the same surname. After this step, 38 individuals remain with no surname match within our threshold of string distance.
@@ -231,7 +243,7 @@ whites_reg_pre = vf[vf$imputed_race_name == "white"& vf$weekfrom >= 0,]
 blacks_reg_post = vf[vf$imputed_race_name == "black"& vf$weekfrom < 0,]
 whites_reg_post = vf[vf$imputed_race_name == "white"& vf$weekfrom < 0,]
 
-pdf('output/Figure_H1.pdf')
+pdf('data/Figure_H1.pdf')
 par(mfrow=c(3,2))
 hist(blacks$pos_black, breaks=200, xlab="P(Black)", main="All Registrants", freq=F, ylim=c(0,80))
 hist(whites$pos_white, breaks=200, xlab="P(White)", main="", freq=F, ylim=c(0,80))
@@ -254,6 +266,8 @@ set.seed(02138)
 reps = Hmisc::rMultinom(temp1, m=1000) #an N x M matrix: N registrants, 1000 imputed races based on the imputation posteriors
 temp1$treat = vf$treat
 
+#START POTENTIALLY REDOING FOR ASIAN HERE? CREATE NEW TABLE WITH ASIAN?
+
 # Appendix Table H.1: Supplement to Table 2 
 ## Generate 1000 bootstrap tables
 # Using the same dplyr call as before, but replacing imputed_race with newrace, the bootstrapped race
@@ -274,76 +288,21 @@ colnames(tab2_sup) = c("Pre-Riot (lower)", "Pre-Riot (median)", "Pre-Riot (upper
                        "Post-Riot (lower)", "Post-Riot (median)", "Post-Riot (upper)")
 rownames(tab2_sup) = c("African American", "White")
 
-#print(xtable(tab2_sup, digits=3),"output/Table_H1.tex", type = 'latex')
+print(xtable(tab2_sup, digits=3),"data/Table_H1.tex", type = 'latex')
 
 ## Table 2:
 out[,2] = tab2_sup[1,c(2,5)]
 out[,3] = tab2_sup[2,c(2,5)]
 
-#print(xtable(t(out),digits = 3), "output/Table_2.tex", type = 'latex')
+print(xtable(t(out),digits = 3), "data/Table_2.tex", type = 'latex')
 
-## Table 3 and Appendix Table H.2: Supplement to Table 3 
-tab3_reps = lapply(1:1000, FUN=function(x){
-  test = vf
-  test$Demreg = ifelse(test$party_abbrev == "D", 1, ifelse(test$party_abbrev == "R", 0, NA))
-  test$Repreg = ifelse(test$party_abbrev == "R", 1, ifelse(test$party_abbrev == "D", 0, NA))
-  
-  test$newrace = reps[,x]
-  
-  dw<-subset(test, test$newrace=="white") 
-  testWR<-t.test(dw$Repreg[dw$treat==0],dw$Repreg[dw$treat==1])
-  testWD<-t.test(dw$Demreg[dw$treat==0],dw$Demreg[dw$treat==1])
-  
-  db<-subset(test, test$newrace=="black") 
-  testBR<-t.test(db$Repreg[db$treat==0],db$Repreg[db$treat==1])
-  testBD<-t.test(db$Demreg[db$treat==0],db$Demreg[db$treat==1])
-  
-  out = c(testWR$estimate[1], testWR$estimate[2],
-          testWD$estimate[1], testWD$estimate[2],
-          testBR$estimate[1], testBR$estimate[2],
-          testBD$estimate[1], testBD$estimate[2])
-  
-    })
-WR_pre = quantile(sapply(tab3_reps, FUN=function(x) x[1]), c(0.05, 0.5, 0.95))
-WR_post = quantile(sapply(tab3_reps, FUN=function(x) x[2]), c(0.05, 0.5, 0.95))
-WD_pre = quantile(sapply(tab3_reps, FUN=function(x) x[3]), c(0.05, 0.5, 0.95))
-WD_post = quantile(sapply(tab3_reps, FUN=function(x) x[4]), c(0.05, 0.5, 0.95))
-BR_pre = quantile(sapply(tab3_reps, FUN=function(x) x[5]), c(0.05, 0.5, 0.95))
-BR_post = quantile(sapply(tab3_reps, FUN=function(x) x[6]), c(0.05, 0.5, 0.95))
-BD_pre = quantile(sapply(tab3_reps, FUN=function(x) x[7]), c(0.05, 0.5, 0.95))
-BD_post = quantile(sapply(tab3_reps, FUN=function(x) x[8]), c(0.05, 0.5, 0.95))
-
-tab3_sup = matrix(c(WR_pre, WR_post, WD_pre, WD_post,
-                    BR_pre, BR_post, BD_pre, BD_post), nrow=4, byrow=T)
-colnames(tab3_sup) = c("Pre-Riot (lower)", "Pre-Riot (median)", "Pre-Riot (upper)",
-                       "Post-Riot (lower)", "Post-Riot (median)", "Post-Riot (upper)")
-rownames(tab3_sup)<-c("White Pr(Reg Republican)","White Pr(Reg Democratic)",
-                      "Black Pr(Reg Republican)", "Black Pr(Reg Democratic)")
-
-## Calculate differences
-tab3_v2 = as.data.frame(tab3_sup)
-tab3_v2$Difference = tab3_v2[,2] - tab3_v2[,5]
-
-wr_p = t.test(sapply(tab3_reps, FUN=function(x) x[1]), sapply(tab3_reps, FUN=function(x) x[2]))$p.value
-wd_p = t.test(sapply(tab3_reps, FUN=function(x) x[3]), sapply(tab3_reps, FUN=function(x) x[4]))$p.value
-br_p = t.test(sapply(tab3_reps, FUN=function(x) x[5]), sapply(tab3_reps, FUN=function(x) x[6]))$p.value
-bd_p = t.test(sapply(tab3_reps, FUN=function(x) x[7]), sapply(tab3_reps, FUN=function(x) x[8]))$p.value
-
-tab3_v2$`p value` = c(wr_p, wd_p, br_p, bd_p)
-
-white_n = c("",nrow(vf[vf$imputed_race_name == "white" & vf$treat == 0 & vf$party_abbrev %in% c("D", "R"),]), "",
-            "",nrow(vf[vf$imputed_race_name == "white" & vf$treat == 1 & vf$party_abbrev %in% c("D", "R"),]), "", "", "")
-black_n = c("",nrow(vf[vf$imputed_race_name == "black" & vf$treat == 0 & vf$party_abbrev %in% c("D", "R"),]), "",
-            "",nrow(vf[vf$imputed_race_name == "black" & vf$treat == 1 & vf$party_abbrev %in% c("D", "R"),]), "", "", "")
-
-tab3_v3 = rbind(tab3_v2[c(1,2),], as.numeric(white_n), tab3_v2[c(3,4),], as.numeric(black_n))
 
 ########### Appendix Table C.3, generating EI estimates
 
 set.seed(12345) ##set seed to make output constant
 
 #######################################
-##### 2) Precinct-level analysis
+##### 2) Precinct-level analysis #####
 #######################################
 
 options(stringsAsFactors = FALSE)
@@ -351,8 +310,8 @@ options(stringsAsFactors = FALSE)
 ## Set up ballot initiative data, run EI
 
 # Start with election data
-edu90 = read.csv("election_data_121_123.csv")[,-c(1,8)] # remove rowname var
-edu92 = read.csv("election_data_152_153.csv")[,-c(1,8)]
+edu90 = read.csv("data/election_data_121_123.csv")[,-c(1,8)] # remove rowname var
+edu92 = read.csv("data/election_data_152_153.csv")[,-c(1,8)]
 merged_final = merge(edu90, edu92, by="precinct")
 merged_final$precinct = as.character(merged_final$precinct)
 colnames(merged_final) = c("precinct", "ballots_cast_90", "P121Y", "P121N", "P123Y", "P123N", 
@@ -374,7 +333,7 @@ merged_final$pct_highered_90_N = 1-merged_final$pct_highered_90
 
 
 # Load in race data
-load("RacePercents92.RData") 
+load("data/RacePercents92.RData") 
 merged_final = merge(data92, merged_final, by="precinct") #3982/5917, 67%
 
 merged_final$other = merged_final$pop18 - (merged_final$latino + merged_final$white+merged_final$black + merged_final$asian)
@@ -461,6 +420,8 @@ out$asian_highdiff = out$asian_highered_92 - out$asian_highered_90
 out$asian_edudiff = out$asian_pubdiff - out$asian_highdiff
 
 
+# WHAT IS THIS SECTION BELOW DOING? for asian: everywhere they do blackpct just do asianpct?
+
 ### Generate the variance on the dif-in-dif
 ## Take posterior draws for all four components, then add all 6 covariances together
 form = cbind(pct_highered_90, pct_highered_90_N) ~ cbind(whitepct,blackpct,latinopct,asianpct, remainder)
@@ -526,7 +487,7 @@ out$black_edudiff_se = 1/sds_b
 out$white_edudiff_se = 1/sds_w
 
 ## In text report means of EdDiff, section on 'Results: Changes in Policy Support
-b = read.csv("precinct_centroids.csv")[,c("precinct", "X", "Y")]
+b = read.csv("data/precinct_centroids.csv")[,c("precinct", "X", "Y")]
 out = out[out$precinct %in% b$precinct,]
 
 # edu_dif
@@ -581,27 +542,35 @@ print(wtd.mean(out$black_edudiff, out$black_edudiff_se) - 1.97*sqrt(wtd.var(out$
 cat("white/Black t-test \n")
 
 print(wtd.t.test(x=out$white_edudiff, y = out$black_edudiff, weight = out$white_edudiff_se, weighty = out$black_edudiff_se))
+```
 
 
+```{r fig1, include = FALSE, cache=TRUE}
 
 ## Figure 1: Dif-in-Dif
-pdf("output/Figure_1.pdf")
+
 par(mfrow=c(3,1), mar=c(3,5,1,2))
+
 hist(out$edu_dif, xlim = c(-0.1, 0.2), las=1, cex.main=1.5,ylab = "Frequency",
      xlab = "", main="Difference in Differences: All Voters",
      breaks = seq(-.7, .3, by=0.002))
 lines(x=c(0,0), y=c(0,100), lty="dotted", lwd=2)
 lines(x=rep(weighted.mean(out$edu_dif, w=out$pop18, na.rm=T),2), y=c(0,100), lwd=3, lty="dashed")
+
+
 hist(out$white_edudiff, xlim = c(-0.1, 0.2),las=1, cex.main=1.5,ylab = "Frequency",
      xlab = "", main="White Voters", breaks=seq(-.8, .4, by=0.002))
-lines(x=c(0,0), y=c(0,220), lty="dotted", lwd=2)
+lines(x=c(0,0), y=c(0,220), lty="dotted", lwd=2) 
 lines(x=rep(weighted.mean(out$white_edudiff, w=out$white_edudiff_se, na.rm=T),2), y=c(0,220),  lwd=3, lty="dashed")
+
 hist(out$black_edudiff, xlim = c(-0.1, 0.2),las=1, cex.main=1.5,ylab = "Frequency",
      xlab = "", main="African American Voters", breaks=seq(-.7, .3, by=0.002))
 lines(x=rep(weighted.mean(out$black_edudiff,w=out$black_edudiff_se, na.rm=T),2), y=c(0,350),  lwd=3, lty="dashed")
 lines(x=c(0,0), y=c(0,350), lty="dotted", lwd=2)
-dev.off()
 
+cairo_pdf("Figure_1.pdf")
+
+dev.off()
 
 ```
 
