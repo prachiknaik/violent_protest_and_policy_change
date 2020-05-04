@@ -375,7 +375,7 @@ lines(x=c(0,0), y=c(0,350), lty="dotted", lwd=2)
 
 # Extension
 
-For my extension, I ran a similar difference-in-differences model on Asian American voters and found that Asian American voters became slightly less liberal (or less  in favor of k-12 education, as the authors define it) and voted more in support for increased university funding. This indicates that the riot had a negative shock for Asian American voters. The weighted mean is -0.0043 and the 95% Confidence Interval is [-0.0059, -0.0027]. Their distribution is depicted below. 
+For my extension, I ran a similar difference-in-differences model on Asian American voters specifically and found that Asian American voters became slightly less liberal (or less  in favor of k-12 education, as the authors define it) and voted more in support for increased university funding. This indicates that the riot had a negative shock for Asian American voters. The weighted mean is -0.0043 and the 95% Confidence Interval is [-0.0059, -0.0027]. Their distribution is depicted below. 
 
 ```{r, extension, include = FALSE, cache= TRUE}
 ### Generate the variance on the dif-in-dif
@@ -481,6 +481,12 @@ lines(x=rep(weighted.mean(out$asian_edudiff, w=out$asian_edudiff_se, na.rm=T),2)
 
 
 ```
+
+My extension aims to reveal the importance of embracing heterogeneous treatment effects. Yes, the indicator for EdDiff overall was positive, indicating that the riot succeeded in changing the electorate's political views towards greater redistribution of public goods like k-12 education; but stopping the story there obscures the small, but meaningful impact the riot had on inter-minority group splintering. Though Asians only make up less than 10% of the population in LA in 1990 according to the US Census, understanding minority groups'disparate experiences is essential to understanding systemic and institutionalized racism in America. Tensions between the Korean American and African American communities in South Central LA long predated the riot and were exacerbated by media coverage of racialized violence in the poverty-stricken neighborhood. According to research from the University of California, Riverside, of the over $1 billion in property damage, Korean-owned property suffered between 35 to 40% of that destruction [@Saigu]. Understanding the effect of the riot on Korean American voter perspectives would have helped illuminate more nuanced pathways forward to remediate racial conflict among minorities. 
+
+# Conclusion
+
+While Enos, Kaufman, and Sands' results have been replicated, confirmed, and extended, questions still remain as to whether the indicators chosen were, indeed, the right indicators to measure the change of political behavior as a result of the 1992 riot. The results depend on a series of non-empirical assumptions, which should, perhaps, have been treated with more sociological scrutiny. Anecdotally speaking, the riot did have a significant impact, and though this study aims to quantify this impact through causal inference, the correlations and juxtapositions upon which the causation depends must be examined through the lens of identity and power. To suggest that African American rights and demands are not associated with the pursuit of higher education is a damaging claim. How are other damaging racial stereotypes evoked at the finding that Asian Americans were less supportive of k-12 funding and more supportive of higher education funding? Embracing heterogenous treatment effects helps uncover some of the nuance that is so crucial to understanding the complicated and thorny history of race in America. 
 
 # Appendix 
 
